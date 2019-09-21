@@ -2528,8 +2528,7 @@ function Nx.Warehouse:CaptureItems()
 --	ch["WareBank"] = nil
 
 	local inv = {}
-	ch["WareInv"] = inv
-	Nx.prt("item")
+	ch["WareInv"] = inv	
 	for _, name in ipairs (self.InvNames) do		
 		local id = GetInventorySlotInfo (name)
 		local link = GetInventoryItemLink ("player", id)
@@ -3128,8 +3127,7 @@ function Nx.Warehouse:InitWarehouseCharacter()
 		ch = {}
 	end
 	Nx.Warehouse.CurCharacter = ch
-	ch["Profs"] = ch["Profs"] or {}		-- Professions	
-	Nx.Warehouse:CaptureItems()
+	ch["Profs"] = ch["Profs"] or {}		-- Professions		
 end
 
 function Nx.Warehouse:RecordCharacterLogin()
@@ -3143,6 +3141,7 @@ function Nx.Warehouse:RecordCharacterLogin()
 	ch["LXPMax"] = UnitXPMax ("player")
 	ch["LXPRest"] = GetXPExhaustion() or 0	
 	Nx.Warehouse:RecordCharacter()	
+	Nx.Warehouse:CaptureItems()
 end
 
 function Nx.Warehouse:RecordCharacter()
