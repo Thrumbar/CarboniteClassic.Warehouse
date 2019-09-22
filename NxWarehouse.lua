@@ -2954,7 +2954,7 @@ function Nx.Warehouse:RecordCharacterSkills()
 	-- Scan professions
 
 --	local prof_1, prof_2, archaeology, fishing, cooking, firstaid = GetProfessions()		-- Indices for GetProfessionInfo
-	local proI = { GetProfessions() }		-- Indices for GetProfessionInfo
+--[[	local proI = { GetProfessions() }		-- Indices for GetProfessionInfo
 
 	for _, i in pairs (proI) do
 
@@ -2970,44 +2970,26 @@ function Nx.Warehouse:RecordCharacterSkills()
 			p.Old = nil
 		end
 	end
-
-
---[[	OLD <4.0
+]]--
 	for n = 1, GetNumSkillLines() do
-
 		local name, hdr, expanded = GetSkillLineInfo (n)
 		if not name then
 			break
 		end
-
 		if hdr and (name == self.LProfessions or name == self.LSecondarySkills) then
-
---			Nx.prt ("hdr %s", name)
-
 			local open
-
 			if not expanded then
---				Nx.prt (" #%s %s", n, GetNumSkillLines())
 				ExpandSkillHeader (n)
 				open = n
---				Nx.prt (" #%s %s", n, GetNumSkillLines())
 			end
-
 			for n2 = n + 1, GetNumSkillLines() do
-
 				local name, hdr, expanded, rank, tempPoints, modifier = GetSkillLineInfo (n2)
-
 				if hdr then
 					break
 				end
-
-				if name == NXlRiding then
+				if name == L["Riding"] then
 					self.SkillRiding = rank
-
 				else
-
---					Nx.prt (" skill %s", name)
-
 					local t = ch["Profs"]
 					local p = t[name] or {}
 					t[name] = p
@@ -3015,15 +2997,11 @@ function Nx.Warehouse:RecordCharacterSkills()
 					p.Old = nil
 				end
 			end
-
 			if open then
 				CollapseSkillHeader (open)
 			end
 		end
 	end
---]]
-
-	-- Nuke any old ones
 
 	for name, v in pairs (ch["Profs"]) do
 		if v.Old then
@@ -3031,8 +3009,6 @@ function Nx.Warehouse:RecordCharacterSkills()
 			Nx.prt (L["%s deleted"], name)
 		end
 	end
-
---	Nx.prt ("Riding %s", self.SkillRiding)
 end
 
 -------------------------------------------------------------------------------
