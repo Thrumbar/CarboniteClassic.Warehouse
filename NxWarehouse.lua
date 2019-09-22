@@ -1057,8 +1057,8 @@ function Nx.Warehouse:Init()
 		"Bag0Slot", "Bag1Slot", "Bag2Slot", "Bag3Slot"
 	}
 
---	self.LProfessions = TRADE_SKILLS
---	self.LSecondarySkills = gsub (SECONDARY_SKILLS, ":", "")
+	self.LProfessions = TRADE_SKILLS
+	self.LSecondarySkills = gsub (SECONDARY_SKILLS, ":", "")
 
 	self.ItemTypes = L["ItemTypes"]
 
@@ -2241,7 +2241,8 @@ function Nx.Warehouse:UpdateProfessions()
 			local id = tonumber (id)
 
 			local link = GetSpellLink (id)
-			local iName, iLink, iRarity, iLvl, iMinLvl, iType, iSubType, iStackCount, iEquipLoc, iTx
+			local iName, iLink, iRarity, iLvl, iMinLvl, iType, iSubType, iStackCount, iEquipLoc, iTx			
+			
 			local col = ""
 
 			local itemId = -id		-- Use negatives for enchants
@@ -2253,6 +2254,8 @@ function Nx.Warehouse:UpdateProfessions()
 				Nx.Item:Load (itemId)
 
 				iName, iLink, iRarity, iLvl, iMinLvl, iType, iSubType, iStackCount, iEquipLoc, iTx = GetItemInfo (itemId)
+				link = iLink or link or nil
+				
 				if iRarity then
 					iRarity = min (iRarity, 6)		-- Fix Blizz bug with color table only going to 6. Account bound are 6 or 7
 					col = iRarity == 1 and "|cffe7e7e7" or ITEM_QUALITY_COLORS[iRarity]["hex"]
@@ -2920,13 +2923,8 @@ end
 -------------------------------------------------------------------------------
 
 function Nx.Warehouse.OnChat_msg_skill()
-
 	local self = Nx.Warehouse
-
 	if self.Enabled then
-
---		Nx.prt ("OnChat_msg_skill")
-
 		WarehouseRec = Nx:ScheduleTimer(self.RecordCharacterSkills,.5,self)
 	end
 end
@@ -2936,43 +2934,15 @@ end
 -------------------------------------------------------------------------------
 
 function Nx.Warehouse:RecordCharacterSkills()
-
---	Nx.prt ("Warehouse Rec skill")
-
 	local ch = Nx.Warehouse.CurCharacter
-
 	for _, v in pairs (ch["Profs"]) do
 		v.Old = true	-- Flag for delete
 	end
 
-	-- Check riding spells to get skill
-
 	self.SkillRiding = Nx.Travel:GetRidingSkill()
 
---	Nx.prt ("WH riding %s", self.SkillRiding)
-
-	-- Scan professions
-
---	local prof_1, prof_2, archaeology, fishing, cooking, firstaid = GetProfessions()		-- Indices for GetProfessionInfo
---[[	local proI = { GetProfessions() }		-- Indices for GetProfessionInfo
-
-	for _, i in pairs (proI) do
-
-		local name, icon, rank, maxrank, numspells, spelloffset, skillline = GetProfessionInfo (i)
-		if name then
-
---			Nx.prt ("Prof %s %s %d", i, name, rank)
-
-			local t = ch["Profs"]
-			local p = t[name] or {}
-			t[name] = p
-			p["Rank"] = rank
-			p.Old = nil
-		end
-	end
-]]--
 	for n = 1, GetNumSkillLines() do
-		local name, hdr, expanded = GetSkillLineInfo (n)
+		local name, hdr, expanded = GetSkillLineInfo (n)		
 		if not name then
 			break
 		end
@@ -2989,7 +2959,7 @@ function Nx.Warehouse:RecordCharacterSkills()
 				end
 				if name == L["Riding"] then
 					self.SkillRiding = rank
-				else
+				else					
 					local t = ch["Profs"]
 					local p = t[name] or {}
 					t[name] = p
@@ -3050,46 +3020,42 @@ end
 -------------------------------------------------------------------------------
 
 function Nx.Warehouse:RecordProfession()
+	local cnt = GetNumTradeSkills()
 
---	Nx.prt ("Rec #skills %s", GetNumTradeSkills())
-
-	local linked = C_TradeSkillUI.IsTradeSkillLinked()
-	if linked then
---		Nx.prt (" Linked, skip")
-		return
-	end
-
-	local recipies = C_TradeSkillUI.GetAllRecipeIDs()
-	
-	if recipies and #recipies == 0 then	
-		return
+	if cnt == 0 then
+		cnt = GetNumCrafts()
+		if cnt == 0 then
+			return
+		end
 	end
 	
 	local ch = Nx.Warehouse.CurCharacter
-
-	local _,title = C_TradeSkillUI.GetTradeSkillLine()	
+	local title = GetTradeSkillLine()
+	
+	if not ch["Profs"] then
+		Nx.Warehouse:RecordCharacterSkills()		
+	end
 	
 	local profT = ch["Profs"][title]
-	
 	if not profT then
 		return
 	end
-	
-	local link = C_TradeSkillUI.GetTradeSkillListLink()
-	if link then
-		profT["Link"] = link
-	end
-	
-	local recipiesInfo = {}
-	for n = 1, #recipies do
-		local skipadd = 0
-		local recipiesInfo = C_TradeSkillUI.GetRecipeInfo(recipies[n])
-		local rId = recipiesInfo.recipeID
-		local link = C_TradeSkillUI.GetRecipeItemLink (rId)		
-		local itemId = link and strmatch (link, L["item:(%d+)"]) or 0
-		profT[tonumber (rId)] = tonumber (itemId)		
+
+	for n = 1, cnt do
+		local name, typ, available, isExpanded = GetTradeSkillInfo (n)
+		if typ ~= "header" then
+			local link = GetTradeSkillItemLink (n)			
+			local rId = link and strmatch (link, "enchant:(%d+)")			
+			local itemId = link and strmatch (link, "item:(%d+)") or 0			
+			if rId then
+				profT[tonumber (rId)] = tonumber (itemId)
+			else
+				profT[tonumber (itemId)] = tonumber (itemId)
+			end
+		end
 	end
 end
+
 
 function Nx.Warehouse:OnButToggleWarehouse (but)
 	Nx.Warehouse:ToggleShow()
